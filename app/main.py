@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Query, HTTPException
+from linebot.models import AudioSendMessage
 import json
 import re
 
@@ -100,19 +101,25 @@ def handle_message(event):
     incoming = normalize_phrase_key(event.message.text)
     mapped_key = pinyin_aliases.get(incoming, incoming)
 
-    # 🧠 Debug log for tracking
     logger.info(f"Incoming: {event.message.text} → Normalized: {incoming} → Mapped key: {mapped_key}")
 
     phrase = phrases.get(mapped_key)
-    ...
+
+    from linebot.models import TextSendMessage, AudioSendMessage
 
     if phrase:
-        reply = f"{event.message.text} ({phrase['pinyin']}): {phrase['translation']}"
-    else:
-        reply = "Sorry, I don't recognize that phrase yet 😅"
+        reply_text = f"{event.message.text} ({phrase['pinyin']}): {phrase['translation']}"
+        filename = format_audio_filename(phrase["pinyin"])
+        audio_url = AUDIO_BASE_URL + filename
 
-    line_bot_api.reply_message(
-        event.reply_token,
-        TextSendMessage(text=reply)
-    )
+        messages = [
+            TextSendMessage(text=reply_text),
+            AudioSendMessage(original_content_url=audio_url, duration=3000)
+        ]
+    else:
+        messages = [
+            TextSendMessage(text="Sorry, I don't recognize that phrase yet 😅")
+        ]
+
+    line_bot_api.reply_message(event.reply_token, messages)
     
