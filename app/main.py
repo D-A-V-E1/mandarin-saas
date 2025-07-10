@@ -25,7 +25,7 @@ phrases = {
 
 # 🧭 Build reverse map: normalized pinyin → Chinese key
 pinyin_aliases = {
-    normalize_phrase_key(v["pinyin"]): normalize_phrase_key(k)  # Keep normalized key to match `phrases`
+    normalize_phrase_key(v["pinyin"]): k  # Use original Chinese phrase key
     for k, v in raw_phrases.items()
 }
 
@@ -52,7 +52,7 @@ def read_root():
 def get_phrase(text: str = Query(...)):
     incoming = normalize_phrase_key(text)
     mapped_key = pinyin_aliases.get(incoming, incoming)
-    phrase = phrases.get(mapped_key)
+    phrase = phrases.get(normalize_phrase_key(mapped_key))
 
     if not phrase:
         raise HTTPException(status_code=404, detail="Phrase not found")
