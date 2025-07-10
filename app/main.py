@@ -11,6 +11,15 @@ def normalize_phrase_key(key: str) -> str:
 
 app = FastAPI()
 
+
+@app.get("/debug-audio")
+def debug_audio():
+    # Adjust path based on where your MP3 lives in your repo
+    audio_path = os.path.join("data", "debug", "xie-xie.mp3")
+    return FileResponse(audio_path, media_type="audio/mpeg")
+
+
+
 # 🔗 Supabase audio base URL
 AUDIO_BASE_URL = "https://bingolingo.supabase.co/storage/v1/object/public/mandarinaudio/"
 
