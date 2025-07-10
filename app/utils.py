@@ -6,8 +6,8 @@ def load_phrases(path="data/phrases.json"):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
     
-    def generate_audio_url(phrase_key):
-    base_url = "https://your-supabase-url.supabase.co/storage/v1/object/public/mandarinaudio/"
+def generate_audio_url(phrase_key):
+    base_url = "https://bawoozkowhxcybbplw.supabase.co/storage/v1/object/public/mandarinaudio/"
     file_map = {
         "你好": "ni-hao.mp3",
         "谢谢": "xie-xie.mp3",
