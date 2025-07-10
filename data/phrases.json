@@ -1,0 +1,132 @@
+{
+  "你好": {
+    "pinyin": "nǐ hǎo",
+    "translation": "Hello",
+    "audio": "https://your-audio-link.com/ni-hao.mp3",
+    "category": "greetings",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you say 'Hello' in Mandarin?",
+      "options": ["你好", "谢谢", "再见"],
+      "answer": "你好"
+    },
+    "culture": "Common in formal and informal settings. In Taiwan, people often pair it with a smile and slight nod."
+  },
+  "谢谢": {
+    "pinyin": "xiè xiè",
+    "translation": "Thank you",
+    "audio": "https://your-audio-link.com/xie-xie.mp3",
+    "category": "greetings",
+    "level": "beginner",
+    "quiz": {
+      "question": "What's the Mandarin phrase for 'Thank you'?",
+      "options": ["再见", "请问", "谢谢"],
+      "answer": "谢谢"
+    },
+    "culture": "Gratitude is deeply valued; tone matters. Politeness can be amplified with a bow or hand gesture."
+  },
+  "再见": {
+    "pinyin": "zài jiàn",
+    "translation": "Goodbye",
+    "audio": "https://your-audio-link.com/zai-jian.mp3",
+    "category": "farewells",
+    "level": "beginner",
+    "quiz": {
+      "question": "Which phrase means 'Goodbye'?",
+      "options": ["你好", "再见", "不客气"],
+      "answer": "再见"
+    },
+    "culture": "Literally means 'see you again'. In Taiwan, sometimes replaced with '掰掰' (bāi bāi), a loan from English."
+  },
+  "请问": {
+    "pinyin": "qǐng wèn",
+    "translation": "Excuse me / May I ask",
+    "audio": "https://your-audio-link.com/qing-wen.mp3",
+    "category": "politeness",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you politely begin a question in Mandarin?",
+      "options": ["请问", "再见", "谢谢"],
+      "answer": "请问"
+    },
+    "culture": "Used before questions to sound courteous. Especially common when asking for directions or help."
+  },
+  "对不起": {
+    "pinyin": "duì bu qǐ",
+    "translation": "I'm sorry",
+    "audio": "https://your-audio-link.com/dui-bu-qi.mp3",
+    "category": "apologies",
+    "level": "beginner",
+    "quiz": {
+      "question": "What's the Mandarin phrase for apologizing?",
+      "options": ["对不起", "你好", "请问"],
+      "answer": "对不起"
+    },
+    "culture": "Tone and sincerity matter. Taiwanese culture appreciates indirect apologies with gifts or gestures."
+  },
+  "没关系": {
+    "pinyin": "méi guān xi",
+    "translation": "It's okay / No problem",
+    "audio": "https://your-audio-link.com/mei-guan-xi.mp3",
+    "category": "reassurance",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you say 'No problem' in Mandarin?",
+      "options": ["谢谢", "没关系", "再见"],
+      "answer": "没关系"
+    },
+    "culture": "Often used to diffuse tension. Saying this warmly can maintain harmony after a slip-up or misunderstanding."
+  },
+  "我不懂": {
+    "pinyin": "wǒ bù dǒng",
+    "translation": "I don't understand",
+    "audio": "https://your-audio-link.com/wo-bu-dong.mp3",
+    "category": "conversation",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you say 'I don't understand'?",
+      "options": ["我不懂", "对不起", "请问"],
+      "answer": "我不懂"
+    },
+    "culture": "Saying this politely shows respect and willingness to learn. Often followed by a request to repeat slower."
+  },
+  "我会说一点中文": {
+    "pinyin": "wǒ huì shuō yì diǎn zhōng wén",
+    "translation": "I can speak a little Chinese",
+    "audio": "https://your-audio-link.com/wo-hui-shuo.mp3",
+    "category": "conversation",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you say 'I can speak a little Chinese'?",
+      "options": ["我不懂", "我会说一点中文", "请问"],
+      "answer": "我会说一点中文"
+    },
+    "culture": "Sparks instant warmth and encouragement when said to locals. Bonus points for clear pronunciation!"
+  },
+  "厕所在哪里": {
+    "pinyin": "cè suǒ zài nǎ lǐ",
+    "translation": "Where is the bathroom?",
+    "audio": "https://your-audio-link.com/cesuo.mp3",
+    "category": "essential",
+    "level": "beginner",
+    "quiz": {
+      "question": "What do you say to ask for the restroom?",
+      "options": ["厕所在哪里", "谢谢", "你好"],
+      "answer": "厕所在哪里"
+    },
+    "culture": "A must-have phrase! Public restrooms are usually clean in Taiwan, and signage often includes pictograms."
+  },
+  "多少钱": {
+    "pinyin": "duō shǎo qián",
+    "translation": "How much does it cost?",
+    "audio": "https://your-audio-link.com/duoshao-qian.mp3",
+    "category": "shopping",
+    "level": "beginner",
+    "quiz": {
+      "question": "How do you ask for a price in Mandarin?",
+      "options": ["多少钱", "请问", "我不懂"],
+      "answer": "多少钱"
+    },
+    "culture": "Useful at street markets. Bargaining is acceptable in some places—do it respectfully with a smile."
+  }
+}
