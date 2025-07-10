@@ -25,7 +25,7 @@ phrases = {
 
 # 🧭 Build reverse map: normalized pinyin → Chinese key
 pinyin_aliases = {
-    normalize_phrase_key(v["pinyin"]): k  # Keep original Chinese phrase key
+    normalize_phrase_key(v["pinyin"]): k  # ⬅️ use original Chinese key (don't normalize)
     for k, v in raw_phrases.items()
 }
 
@@ -50,9 +50,10 @@ def read_root():
 # 🔎 Phrase endpoint (dynamic response)
 @app.get("/api/phrase")
 def get_phrase(text: str = Query(...)):
-    incoming = normalize_phrase_key(text)
+    incoming = normalize_phrase_key(event.message.text)
     mapped_key = pinyin_aliases.get(incoming, incoming)
-    phrase = phrases.get(normalize_phrase_key(mapped_key))
+    normalized_key = normalize_phrase_key(mapped_key)
+    phrase = phrases.get(normalized_key)
 
     if not phrase:
         raise HTTPException(status_code=404, detail="Phrase not found")
