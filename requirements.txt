@@ -2,9 +2,5 @@ fastapi
 uvicorn
 python-dotenv
 aiofiles
-
-
-fastapi
-uvicorn
 python-multipart
 pydantic
