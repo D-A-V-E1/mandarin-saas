@@ -23,9 +23,9 @@ phrases = {
     for k, v in raw_phrases.items()
 }
 
-# 🧭 Build reverse map: normalized pinyin → Chinese key
+# 🧭 Build reverse map: normalized pinyin → Chinese phrase (unmodified key)
 pinyin_aliases = {
-    normalize_phrase_key(v["pinyin"]): k  # ⬅️ use original Chinese key (don't normalize)
+    normalize_phrase_key(v["pinyin"]): k  # use unnormalized Chinese phrase key
     for k, v in raw_phrases.items()
 }
 
