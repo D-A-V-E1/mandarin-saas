@@ -2,6 +2,12 @@ from fastapi import FastAPI, Query, HTTPException
 import json
 import re
 
+import logging
+logger = logging.getLogger("uvicorn")
+
+def normalize_phrase_key(key: str) -> str:
+    return key.strip().replace(" ", "").lower()
+
 app = FastAPI()
 
 # 🔗 Supabase audio base URL
@@ -9,7 +15,22 @@ AUDIO_BASE_URL = "https://bingolingo.supabase.co/storage/v1/object/public/mandar
 
 # 📁 Load phrases from JSON
 with open("phrases.json", encoding="utf-8") as f:
-    phrases = json.load(f)
+    raw_phrases = json.load(f)
+
+# 🧠 Normalize Chinese keys
+phrases = {
+    normalize_phrase_key(k): v
+    for k, v in raw_phrases.items()
+}
+
+# 🧭 Build reverse map: normalized pinyin → Chinese key
+pinyin_aliases = {
+    normalize_phrase_key(v["pinyin"]): normalize_phrase_key(k)  # Keep normalized key to match `phrases`
+    for k, v in raw_phrases.items()
+}
+
+logger.info(f"🔍 Phrases dict keys: {list(phrases.keys())}")
+logger.info(f"🔁 Pinyin alias map: {pinyin_aliases}")
 
 # 🧹 Clean pinyin for filenames
 def format_audio_filename(pinyin: str) -> str:
@@ -28,8 +49,11 @@ def read_root():
 
 # 🔎 Phrase endpoint (dynamic response)
 @app.get("/api/phrase")
-def get_phrase(text: str = Query(..., description="The phrase to translate")):
-    phrase = phrases.get(text)
+def get_phrase(text: str = Query(...)):
+    incoming = normalize_phrase_key(text)
+    mapped_key = pinyin_aliases.get(incoming, incoming)
+    phrase = phrases.get(mapped_key)
+
     if not phrase:
         raise HTTPException(status_code=404, detail="Phrase not found")
 
@@ -37,7 +61,7 @@ def get_phrase(text: str = Query(..., description="The phrase to translate")):
     audio_url = AUDIO_BASE_URL + filename
 
     return {
-        "input": text,
+        "input": mapped_key,
         "translation": phrase["translation"],
         "pinyin": phrase["pinyin"],
         "audio_url": audio_url,
@@ -69,11 +93,17 @@ async def webhook(req: Request):
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
-    text = event.message.text
-    phrase = phrases.get(text)
+    incoming = normalize_phrase_key(event.message.text)
+    mapped_key = pinyin_aliases.get(incoming, incoming)
+
+    # 🧠 Debug log for tracking
+    logger.info(f"Incoming: {event.message.text} → Normalized: {incoming} → Mapped key: {mapped_key}")
+
+    phrase = phrases.get(mapped_key)
+    ...
 
     if phrase:
-        reply = f"{text} ({phrase['pinyin']}): {phrase['translation']}"
+        reply = f"{event.message.text} ({phrase['pinyin']}): {phrase['translation']}"
     else:
         reply = "Sorry, I don't recognize that phrase yet 😅"
 
@@ -81,3 +111,4 @@ def handle_message(event):
         event.reply_token,
         TextSendMessage(text=reply)
     )
+    
