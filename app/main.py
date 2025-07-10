@@ -14,7 +14,10 @@ app = FastAPI()
 AUDIO_BASE_URL = "https://bingolingo.supabase.co/storage/v1/object/public/mandarinaudio/"
 
 # 📁 Load phrases from JSON
-with open("phrases.json", encoding="utf-8") as f:
+import os
+
+json_path = os.path.join(os.path.dirname(__file__), "../data/phrases.json")
+with open(json_path, encoding="utf-8") as f:
     raw_phrases = json.load(f)
 
 # 🧠 Normalize Chinese keys
