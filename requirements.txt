@@ -6,3 +6,4 @@ python-multipart
 pydantic
 line-bot-sdk
 edge-tts
+supabase-py
