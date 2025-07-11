@@ -160,10 +160,13 @@ def handle_message(event):
             TextSendMessage(text=reply_text),
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
-     else:
+    else:
         # use LLM fallback and send messages
         from utils.llm_client import chat
         from utils.json_utils import extract_json  # Or wherever you store extract_json()
+
+
+
 
         # Build LLM prompt
         messages = [
