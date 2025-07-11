@@ -1,5 +1,10 @@
 from fastapi import FastAPI, Query, HTTPException
 from linebot.models import AudioSendMessage
+from app.routes import audio #, chat, quiz
+from fastapi.staticfiles import StaticFiles
+import os
+from dotenv import load_dotenv
+load_dotenv()
 import json
 import re
 
@@ -11,17 +16,28 @@ def normalize_phrase_key(key: str) -> str:
 
 app = FastAPI()
 
+app.include_router(audio.router)
+# app.include_router(chat.router)
+# app.include_router(quiz.router)
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
+
+
+from fastapi.responses import FileResponse
+import os
 
 @app.get("/debug-audio")
 def debug_audio():
-    # Adjust path based on where your MP3 lives in your repo
-    audio_path = os.path.join("data", "debug", "xie-xie.mp3")
+    audio_path = os.path.join(os.path.dirname(__file__), "..", "data", "debug", "xie-xie.mp3")
+    if not os.path.isfile(audio_path):
+        raise HTTPException(status_code=404, detail="Audio file not found.")
     return FileResponse(audio_path, media_type="audio/mpeg")
 
 
 
 # 🔗 Supabase audio base URL
-AUDIO_BASE_URL = "https://bingolingo.supabase.co/storage/v1/object/public/mandarinaudio/"
+AUDIO_BASE_URL = os.getenv("SUPABASE_AUDIO_BASE")
 
 # 📁 Load phrases from JSON
 import os
@@ -63,7 +79,7 @@ def read_root():
 # 🔎 Phrase endpoint (dynamic response)
 @app.get("/api/phrase")
 def get_phrase(text: str = Query(...)):
-    incoming = normalize_phrase_key(event.message.text)
+    incoming = normalize_phrase_key(text)
     mapped_key = pinyin_aliases.get(incoming, incoming)
     normalized_key = normalize_phrase_key(mapped_key)
     phrase = phrases.get(normalized_key)
