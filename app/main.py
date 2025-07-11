@@ -147,4 +147,7 @@ def handle_message(event):
         ]
 
     line_bot_api.reply_message(event.reply_token, messages)
+
+    print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
+print("🧪 SUPABASE_KEY =", os.getenv("SUPABASE_KEY")[:6], "...")  # show first few characters
     

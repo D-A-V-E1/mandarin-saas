@@ -38,3 +38,6 @@ async def generate_and_upload_tts(text: str) -> str:
 async def get_audio(text: str):
     audio_url = await generate_and_upload_tts(text)
     return {"audio_url": audio_url}
+
+print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
+print("🧪 SUPABASE_KEY =", os.getenv("SUPABASE_KEY")[:6], "...")  # show first few characters
