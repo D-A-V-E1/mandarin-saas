@@ -78,7 +78,7 @@ def get_phrase(text: str = Query(...)):
         raise HTTPException(status_code=404, detail="Phrase not found")
 
     filename = format_audio_filename(phrase["pinyin"])
-    audio_url = (AUDIO_BASE_URL + filename).strip()
+    audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
 
     return {
         "input": mapped_key,
@@ -132,7 +132,7 @@ def handle_message(event):
     if phrase:
         reply_text = f"{event.message.text} ({phrase['pinyin']}): {phrase['translation']}"
         filename = format_audio_filename(phrase["pinyin"])
-        audio_url = (AUDIO_BASE_URL + filename).strip()
+        audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
         messages = [
             TextSendMessage(text=reply_text),
             AudioSendMessage(original_content_url=audio_url, duration=3000)
@@ -164,7 +164,7 @@ def handle_message(event):
                     json.dump(phrases, f, ensure_ascii=False, indent=2)
 
                 filename = format_audio_filename(entry["pinyin"])
-                audio_url = (AUDIO_BASE_URL + filename).strip()
+                audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
 
                 reply_text = (
                     f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
