@@ -38,7 +38,7 @@ app.include_router(ping_router)
 # app.include_router(chat.router)
 # app.include_router(quiz.router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 
