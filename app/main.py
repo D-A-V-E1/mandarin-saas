@@ -132,12 +132,20 @@ async def webhook(req: Request):
     body = await req.body()
     signature = req.headers.get("X-Line-Signature", "")
 
+    # 🔍 Add these debug logs right here
+    logger.info(f"🧪 Raw LINE body: {body}")
+    logger.info(f"🧪 Signature: {signature}")
+
     try:
         handler.handle(body.decode("utf-8"), signature)
     except Exception as e:
         return {"error": str(e)}
 
     return "OK"
+
+@handler.default
+def fallback(event):
+    logger.warning(f"⚠️ Unhandled LINE event received: {event}")
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
@@ -215,6 +223,8 @@ def handle_message(event):
             line_bot_api.reply_message(event.reply_token, messages)
         except Exception as e:
             logger.error(f"LINE reply error: {e}")
+            logger.info(f"Reply payload: {messages}")
+            logger.info(f"Reply token: {event.reply_token}")
 
    
 print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
