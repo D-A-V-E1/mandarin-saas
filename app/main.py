@@ -1,22 +1,40 @@
 from fastapi import FastAPI, Query, HTTPException
-from linebot.models import AudioSendMessage
-from app.routes import audio #, chat, quiz
 from fastapi.staticfiles import StaticFiles
+from linebot.models import AudioSendMessage
 import os
 from dotenv import load_dotenv
+
+
 load_dotenv()
+
 import json
 import re
-
 import logging
+
 logger = logging.getLogger("uvicorn")
+
+# ✅ Define FastAPI first
+
+app = FastAPI()
+
+# 🧩 Route imports AFTER app is defined
+
+from app.routes import audio #, chat, quiz
+from app.routes.ping.ping import router as ping_router
+from app.routes.chat.chat import router as chat_router
+app.include_router(chat_router)
+
+from app.routes.healthcheck.healthcheck import router as healthcheck_router
+app.include_router(healthcheck_router)
+
 
 def normalize_phrase_key(key: str) -> str:
     return key.strip().replace(" ", "").lower()
 
-app = FastAPI()
+# 🔗 Register routes
 
 app.include_router(audio.router)
+app.include_router(ping_router)
 # app.include_router(chat.router)
 # app.include_router(quiz.router)
 
@@ -133,6 +151,7 @@ def handle_message(event):
     from linebot.models import TextSendMessage, AudioSendMessage
 
     if phrase:
+        # build and send messages 
         reply_text = f"{event.message.text} ({phrase['pinyin']}): {phrase['translation']}"
         filename = format_audio_filename(phrase["pinyin"])
         audio_url = AUDIO_BASE_URL + filename
@@ -141,13 +160,57 @@ def handle_message(event):
             TextSendMessage(text=reply_text),
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
-    else:
+     else:
+        # use LLM fallback and send messages
+        from utils.llm_client import chat
+        from utils.json_utils import extract_json  # Or wherever you store extract_json()
+
+        # Build LLM prompt
         messages = [
-            TextSendMessage(text="Sorry, I don't recognize that phrase yet 😅")
+            {
+                "role": "system",
+                "content": (
+                    "You are a native Mandarin tutor. Reply ONLY with a JSON object containing: "
+                    "'pinyin', 'translation', 'audio', 'category', 'level', 'quiz', 'culture'. "
+                    f"Explain the phrase: {event.message.text}"
+                )
+            }
         ]
 
-    line_bot_api.reply_message(event.reply_token, messages)
+        response = chat(messages)
+        cleaned = extract_json(response)
 
-    print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
+        if not cleaned:
+            reply_text = "🤖 I heard you, but couldn't process that phrase just yet."
+            messages = [TextSendMessage(text=reply_text)]
+        else:
+            try:
+                entry = json.loads(cleaned)
+
+                # Save to phrases dict
+                normalized_key = normalize_phrase_key(event.message.text)
+                phrases[normalized_key] = entry
+
+                # Also save back to disk
+                json_path = os.path.join(os.path.dirname(__file__), "../data/phrases.json")
+                with open(json_path, "w", encoding="utf-8") as f:
+                    json.dump(phrases, f, ensure_ascii=False, indent=2)
+
+                reply_text = (
+                    f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
+                    f"🎧 {entry['audio']}\n"
+                    f"📖 {entry['culture']}\n"
+                    f"🧪 {entry['quiz']['question']}\n"
+                    f"Options: {', '.join(entry['quiz']['options'])}"
+                )
+                messages = [TextSendMessage(text=reply_text)]
+
+            except Exception as e:
+                messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
+
+        line_bot_api.reply_message(event.reply_token, messages)
+
+   
+print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
 print("🧪 SUPABASE_KEY =", os.getenv("SUPABASE_KEY")[:6], "...")  # show first few characters
     

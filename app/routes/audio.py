@@ -1,8 +1,9 @@
 
 from dotenv import load_dotenv
-load_dotenv()
-from fastapi import APIRouter
 import os
+load_dotenv()
+print("SUPABASE_URL loaded from env:", os.getenv("SUPABASE_URL"))
+from fastapi import APIRouter
 import uuid
 import asyncio
 import edge_tts
@@ -16,6 +17,7 @@ SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 AUDIO_BUCKET = os.getenv("AUDIO_BUCKET_NAME")
 
 # Create Supabase client
+print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # TTS + Upload function
@@ -39,5 +41,5 @@ async def get_audio(text: str):
     audio_url = await generate_and_upload_tts(text)
     return {"audio_url": audio_url}
 
-print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
+
 print("🧪 SUPABASE_KEY =", os.getenv("SUPABASE_KEY")[:6], "...")  # show first few characters
