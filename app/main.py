@@ -169,7 +169,7 @@ def handle_message(event):
 
 
         # Build LLM prompt
-        messages = [
+        llm_messages = [
             {
                 "role": "system",
                 "content": (
@@ -180,7 +180,7 @@ def handle_message(event):
             }
         ]
 
-        response = chat(messages)
+        response = chat(llm_messages)
         cleaned = extract_json(response)
 
         if not cleaned:
@@ -211,7 +211,10 @@ def handle_message(event):
             except Exception as e:
                 messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
 
-        line_bot_api.reply_message(event.reply_token, messages)
+        try:
+            line_bot_api.reply_message(event.reply_token, messages)
+        except Exception as e:
+            logger.error(f"LINE reply error: {e}")
 
    
 print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
