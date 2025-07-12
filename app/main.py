@@ -10,7 +10,10 @@ import os, json, re, logging, requests
 
 # 🔧 Environment setup
 load_dotenv()
+
 logger = logging.getLogger("uvicorn")
+AUDIO_BASE_URL = os.getenv("SUPABASE_AUDIO_BASE")
+logger.info(f"🔍 Loaded AUDIO_BASE_URL: {AUDIO_BASE_URL}")
 
 # 🚀 FastAPI instance
 app = FastAPI()
