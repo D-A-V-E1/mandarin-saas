@@ -190,8 +190,11 @@ def handle_message(event):
                 normalized_key = normalize_phrase_key(event.message.text)
                 phrases[normalized_key] = entry
 
-                entry["phrase"] = event.message.text  # Required for phrase_map keying
-update_phrase_map(entry)
+                try:
+                    entry["phrase"] = event.message.text  # Add missing 'phrase' key
+                    update_phrase_map(entry)
+                except Exception as e:
+                    logger.error(f"❌ Error updating phrase_map.json: {e}")
 
                 filename = format_audio_filename(entry["pinyin"])
                 audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
