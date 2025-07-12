@@ -9,7 +9,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Project utilities
 from app.utils import add_to_generate_file, update_phrase_map
-from utils.fallback_logger import log_missing_phrase
+from app.utils.fallback_logger import log_missing_phrase
 
 # Debug: confirm current working directory
 print("📁 Current working directory:", os.getcwd())
@@ -193,7 +193,7 @@ def handle_message(event):
         ]
     else:
         # 🧠 Try structured LLM response via `chat()`
-        from utils.llm_client import chat
+        from app.utils.llm_client import chat
 
         llm_messages = [{
             "role": "system",
