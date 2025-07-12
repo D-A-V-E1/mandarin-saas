@@ -17,7 +17,6 @@ app = FastAPI()
 
 # Integate Ollama LLM client
 
-from app.utils import add_to_generate_file
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
