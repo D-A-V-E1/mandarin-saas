@@ -252,11 +252,11 @@ else:
 
 
 
-                messages = [
+        messages = [
                     TextSendMessage(text=reply_text),
                     AudioSendMessage(original_content_url=audio_url, duration=3000)
                 ]
-            except Exception as e:
+    except Exception as e:
                 logger.error(f"❌ Couldn't parse LLM JSON: {e}")
                 messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
 
