@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 from app.utils import add_to_generate_file, update_phrase_map
 from utils.fallback_logger import log_missing_phrase
 import os, json, re, logging, requests
+print("📁 Current working directory:", os.getcwd())
 
 # 🔧 Environment setup
 load_dotenv()
