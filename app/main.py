@@ -1,17 +1,18 @@
-import os, sys, json, re, logging, requests
+import os, json, re, logging, requests
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-# Patch sys.path if needed for root-level modules
-# sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+# ✅ Imports are now clean — no sys.path patching needed
+# from app.utils import add_to_generate_file, update_phrase_map
+# from app.utils.fallback_logger import log_missing_phrase
 
-# Project utilities
-from app.utils import add_to_generate_file, update_phrase_map
+# Modular imports from specific utility modules
+from app.phrase_store import add_to_generate_file, update_phrase_map
 from app.utils.fallback_logger import log_missing_phrase
 
-# Debug: confirm current working directory
+# 🛠️ Sanity check: current working directory
 print("📁 Current working directory:", os.getcwd())
 
 # 🔧 Environment setup
