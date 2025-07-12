@@ -2,85 +2,35 @@ from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from app.utils import (
-    add_to_generate_file,
-    update_phrase_map
-)
+from app.utils import add_to_generate_file, update_phrase_map
 import os, json, re, logging, requests
-
-
-def extract_json(text: str) -> dict | None:
-    try:
-        start = text.index('{')
-        end = text.rindex('}') + 1
-        return json.loads(text[start:end])
-    except Exception as e:
-        logger.error(f"❌ Failed to extract JSON: {e}")
-        return None
 
 # 🔧 Environment setup
 load_dotenv()
-
 logger = logging.getLogger("uvicorn")
+
 AUDIO_BASE_URL = os.getenv("SUPABASE_AUDIO_BASE")
-logger.info(f"🔍 Loaded AUDIO_BASE_URL: {AUDIO_BASE_URL}")
+if not AUDIO_BASE_URL:
+    logger.error("❌ SUPABASE_AUDIO_BASE not set — check your .env or Render env")
+else:
+    logger.info(f"🔍 Loaded AUDIO_BASE_URL: {AUDIO_BASE_URL}")
 
 # 🚀 FastAPI instance
 app = FastAPI()
 
-# Integate Ollama LLM client
-
-
+# 🌐 LLM client endpoint
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
-@app.post("/line-webhook")
-async def line_webhook(request: Request):
-    data = await request.json()
-    user_text = data['events'][0]['message']['text']
+# 🧠 JSON extraction utility
+def extract_json(text: str) -> str | None:
+    match = re.search(r"\{.*?\}", text, re.DOTALL)
+    return match.group(0) if match else None
 
-    # Send to Ollama
-    response = requests.post(OLLAMA_URL, json={"prompt": user_text, "model": "llama3"})
-    result = response.json()['response']  # Depends on Ollama model's return structure
-
-    # TODO: Send `result` back to LINE user using the Messaging API
-    return {"reply": result}
-
-
-# Example usage:
-add_to_generate_file({
-    "title": "New Lesson",
-    "prompt": "How do classifiers work in Mandarin?",
-    "response": "Classifiers are used in Chinese when counting or specifying nouns..."
-})
-
-# 📁 Route imports
-from app.routes import audio
-from app.routes.ping.ping import router as ping_router
-from app.routes.chat.chat import router as chat_router
-from app.routes.healthcheck.healthcheck import router as healthcheck_router
-
-app.include_router(audio.router)
-app.include_router(ping_router)
-app.include_router(chat_router)
-app.include_router(healthcheck_router)
-
-# 🎧 Debug audio endpoint
-@app.get("/debug-audio")
-def debug_audio():
-    audio_path = os.path.join(os.path.dirname(__file__), "..", "data", "debug", "xie-xie.mp3")
-    if not os.path.isfile(audio_path):
-        raise HTTPException(status_code=404, detail="Audio file not found.")
-    return FileResponse(audio_path, media_type="audio/mpeg")
-
-# 🌍 Supabase audio base URL
-AUDIO_BASE_URL = os.getenv("SUPABASE_AUDIO_BASE")
-if not AUDIO_BASE_URL:
-    logger.error("❌ SUPABASE_AUDIO_BASE not set — check your .env or Render env")
-
-# 🧠 Phrase utilities
+# 🧠 Normalize phrase key for lookup
 def normalize_phrase_key(key: str) -> str:
     return key.strip().replace(" ", "").lower()
 
+# 🔊 Format audio filename from pinyin
 def format_audio_filename(pinyin: str) -> str:
     tone_map = {
         r"[āáǎà]": "a", r"[ēéěè]": "e", r"[īíǐì]": "i",
@@ -90,11 +40,7 @@ def format_audio_filename(pinyin: str) -> str:
         pinyin = re.sub(pattern, replacement, pinyin)
     return pinyin.replace(" ", "-").strip().lower() + ".mp3"
 
-def extract_json(text: str) -> str:
-    match = re.search(r"\{.*?\}", text, re.DOTALL)
-    return match.group(0) if match else None
-
-# 📘 Load phrases
+# 📘 Load phrase data
 json_path = os.path.join(os.path.dirname(__file__), "../data/phrases.json")
 with open(json_path, encoding="utf-8") as f:
     raw_phrases = json.load(f)
@@ -105,6 +51,36 @@ pinyin_aliases = {normalize_phrase_key(v["pinyin"]): k for k, v in raw_phrases.i
 logger.info(f"Alias map preview: {pinyin_aliases}")
 logger.info(f"🔍 Phrases dict keys: {list(phrases.keys())}")
 
+# 🔗 LINE setup
+from linebot import LineBotApi, WebhookHandler
+from linebot.models import (
+    MessageEvent, TextMessage, TextSendMessage,
+    AudioSendMessage, StickerMessage
+)
+
+line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
+handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
+
+# 📄 Route mounting
+from app.routes import audio
+from app.routes.ping.ping import router as ping_router
+from app.routes.chat.chat import router as chat_router
+from app.routes.healthcheck.healthcheck import router as healthcheck_router
+
+app.include_router(audio.router)
+app.include_router(ping_router)
+app.include_router(chat_router)
+app.include_router(healthcheck_router)
+
+# 🎧 Debug endpoint
+@app.get("/debug-audio")
+def debug_audio():
+    audio_path = os.path.join(os.path.dirname(__file__), "..", "data", "debug", "xie-xie.mp3")
+    if not os.path.isfile(audio_path):
+        raise HTTPException(status_code=404, detail="Audio file not found.")
+    return FileResponse(audio_path, media_type="audio/mpeg")
+
+# 🌱 Root and phrase API
 @app.get("/")
 def read_root():
     return {"message": "Hello, FastAPI!"}
@@ -161,6 +137,18 @@ def handle_sticker(event):
         TextSendMessage(text="👀 Stickers are cool — but I only process Mandarin phrases for now.")
     ])
 
+# 🧠 Fallback for phrases not in static map
+def get_ollama_response(prompt: str) -> str:
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={"prompt": prompt, "model": "llama3"}
+        )
+        return response.json().get("response", "🤖 Ollama didn’t reply.")
+    except Exception as e:
+        logger.error(f"❌ Ollama error: {e}")
+        return f"⚠️ Error reaching Ollama: {e}"
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     logger.info("✅ LINE TextMessage handler triggered")
@@ -180,6 +168,7 @@ def handle_message(event):
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
     else:
+        # 🧠 Try structured LLM response first
         from utils.llm_client import chat
 
         llm_messages = [{
@@ -192,24 +181,46 @@ def handle_message(event):
         }]
 
         response = chat(llm_messages)
-        
+        cleaned = extract_json(response)
 
-# logger.info(f"🧠 Raw LLM response: {response}")
-# logger.info(f"🧪 Extracted JSON: {cleaned}")
+        if not cleaned:
+            # 🩺 Fallback to Ollama if LLM didn't produce JSON
+            ollama_text = get_ollama_response(event.message.text)
+            messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
+        else:
+            try:
+                entry = json.loads(cleaned)
+                entry["phrase"] = event.message.text
 
+                # Optional: persist entry to phrase_map.json / generate.json
 
+                filename = format_audio_filename(entry["pinyin"])
+                audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
 
-# 🔄 Define Ollama fallback function before usage
-def get_ollama_response(prompt: str) -> str:
+                reply_text = (
+                    f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
+                    f"🎧 {entry['audio']}\n"
+                    f"📖 {entry['culture']}\n"
+                    f"🧪 {entry['quiz']['question']}\n"
+                    f"Options: {', '.join(entry['quiz']['options'])}"
+                )
+
+                messages = [
+                    TextSendMessage(text=reply_text),
+                    AudioSendMessage(original_content_url=audio_url, duration=3000)
+                ]
+            except Exception as e:
+                logger.error(f"❌ Couldn't parse LLM JSON: {e}")
+                messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
+
     try:
-        response = requests.post(
-            "http://localhost:11434/api/generate",
-            json={"prompt": prompt, "model": "llama3"}
-        )
-        return response.json().get("response", "🤖 Ollama didn’t reply.")
+        line_bot_api.reply_message(event.reply_token, messages)
+        logger.info(f"✅ Reply sent: {messages}")
     except Exception as e:
-        logger.error(f"❌ Ollama error: {e}")
-        return f"⚠️ Error reaching Ollama: {e}"
+        logger.error(f"LINE reply error: {e}")
+        logger.info(f"Reply payload: {messages}")
+        logger.info(f"Reply token: {event.reply_token}")
+
 
 # 🧠 Get tutor response and parse JSON
 ollama_text = get_ollama_response(event.message.text)
