@@ -3,13 +3,13 @@ from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-
 # Patch sys.path if needed for root-level modules
-sys.path.append(os.path.dirname(__file__) + "/..")
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 # Project utilities
 from app.utils import add_to_generate_file, update_phrase_map
-from app.utils.fallback_logger import log_missing_phrase
+from utils.fallback_logger import log_missing_phrase
 
 # Debug: confirm current working directory
 print("📁 Current working directory:", os.getcwd())
