@@ -3,6 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from app.utils import add_to_generate_file, update_phrase_map
+from app.utils.fallback_logger import log_missing_phrase
 import os, json, re, logging, requests
 
 # 🔧 Environment setup
@@ -199,6 +200,8 @@ def handle_message(event):
         cleaned = extract_json(response)
 
         if not cleaned:
+            log_missing_phrase(user_text, source="llm_parse_failure", user_id=event.source.user_id)
+
             if USE_OLLAMA:
                 ollama_text = get_ollama_response(user_text)
                 messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
