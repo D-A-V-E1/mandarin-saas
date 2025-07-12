@@ -9,27 +9,31 @@ from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from app.routes.debug.debug import router as debug_router
-app.include_router(debug_router)
 
 # ✅ Ensure 'app' is visible for all absolute imports like 'app.utils.fallback_logger'
 APP_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
 sys.path.append(APP_ROOT)
 
-# ✅ Now you can cleanly use:
-# from app.utils.fallback_logger import log_missing_phrase
-# from app.routes.chat.chat import router as chat_router
+# 🔧 Environment setup
+load_dotenv()
+logger = logging.getLogger("uvicorn")
 
-# Modular imports from specific utility modules
+# 🧠 Create FastAPI instance
+app = FastAPI()
+
+# 📦 Modular route imports
+from app.routes.debug.debug import router as debug_router
+from app.routes.chat.chat import router as chat_router
+
+app.include_router(debug_router)
+app.include_router(chat_router)
+
+# 🧩 Modular imports from utilities
 from app.phrase_store import add_to_generate_file, update_phrase_map
 from app.utils.fallback_logger import log_missing_phrase
 
 # 🛠️ Sanity check: current working directory
 print("📁 Current working directory:", os.getcwd())
-
-# 🔧 Environment setup
-load_dotenv()
-logger = logging.getLogger("uvicorn")
 
 AUDIO_BASE_URL = os.getenv("SUPABASE_AUDIO_BASE")
 if not AUDIO_BASE_URL:
