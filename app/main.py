@@ -8,6 +8,16 @@ from app.utils import (
 )
 import os, json, re, logging, requests
 
+
+def extract_json(text: str) -> dict | None:
+    try:
+        start = text.index('{')
+        end = text.rindex('}') + 1
+        return json.loads(text[start:end])
+    except Exception as e:
+        logger.error(f"❌ Failed to extract JSON: {e}")
+        return None
+
 # 🔧 Environment setup
 load_dotenv()
 
@@ -183,6 +193,9 @@ def handle_message(event):
 
         response = chat(llm_messages)
         cleaned = extract_json(response)
+
+logger.info(f"🧠 Raw LLM response: {response}")
+logger.info(f"🧪 Extracted JSON: {cleaned}")
 
 if not cleaned:
     # 🔄 Try fallback response from Ollama
