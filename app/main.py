@@ -87,6 +87,18 @@ app.include_router(ping_router)
 app.include_router(chat_router)
 app.include_router(healthcheck_router)
 
+
+@app.get("/debug/log-path")
+def debug_log_path():
+    return {
+        "data_dir": DATA_DIR,
+        "log_path": MISSING_LOG_PATH,
+        "exists": os.path.exists(MISSING_LOG_PATH)
+    }
+
+
+
+
 # 🎧 Debug endpoint
 @app.get("/debug-audio")
 def debug_audio():
