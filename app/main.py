@@ -3,7 +3,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from app.utils import add_to_generate_file, update_phrase_map
-from app.utils.fallback_logger import log_missing_phrase
+from utils.fallback_logger import log_missing_phrase
 import os, json, re, logging, requests
 
 # 🔧 Environment setup
