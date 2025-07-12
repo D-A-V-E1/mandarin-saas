@@ -2,7 +2,11 @@ from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-import os, json, re, logging
+from app.utils import (
+    add_to_generate_file,
+    update_phrase_map
+)
+import os, json, re, logging, requests
 
 # 🔧 Environment setup
 load_dotenv()
@@ -10,6 +14,32 @@ logger = logging.getLogger("uvicorn")
 
 # 🚀 FastAPI instance
 app = FastAPI()
+
+# Integate Ollama LLM client
+
+from app.utils import add_to_generate_file
+
+OLLAMA_URL = "http://localhost:11434/api/generate"
+
+@app.post("/line-webhook")
+async def line_webhook(request: Request):
+    data = await request.json()
+    user_text = data['events'][0]['message']['text']
+
+    # Send to Ollama
+    response = requests.post(OLLAMA_URL, json={"prompt": user_text, "model": "llama3"})
+    result = response.json()['response']  # Depends on Ollama model's return structure
+
+    # TODO: Send `result` back to LINE user using the Messaging API
+    return {"reply": result}
+
+
+# Example usage:
+add_to_generate_file({
+    "title": "New Lesson",
+    "prompt": "How do classifiers work in Mandarin?",
+    "response": "Classifiers are used in Chinese when counting or specifying nouns..."
+})
 
 # 📁 Route imports
 from app.routes import audio
@@ -160,8 +190,8 @@ def handle_message(event):
                 normalized_key = normalize_phrase_key(event.message.text)
                 phrases[normalized_key] = entry
 
-                with open(json_path, "w", encoding="utf-8") as f:
-                    json.dump(phrases, f, ensure_ascii=False, indent=2)
+                entry["phrase"] = event.message.text  # Required for phrase_map keying
+update_phrase_map(entry)
 
                 filename = format_audio_filename(entry["pinyin"])
                 audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
