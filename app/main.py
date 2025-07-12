@@ -198,9 +198,11 @@ try:
     line_bot_api.reply_message(event.reply_token, messages)
     logger.info(f"✅ Reply sent: {messages}")
 except Exception as e:
+    pass  # no action for now
     # logger.error(f"LINE reply error: {e}")
     # logger.info(f"Reply payload: {messages}")
     # logger.info(f"Reply token: {event.reply_token}")
+    
 
 # 🧪 Visual env check
 print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
