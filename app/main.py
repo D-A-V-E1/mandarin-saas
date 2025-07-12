@@ -184,29 +184,66 @@ def handle_message(event):
         response = chat(llm_messages)
         cleaned = extract_json(response)
 
-        if not cleaned:
-            messages = [TextSendMessage(text="🤖 I heard you, but couldn't process that phrase just yet.")]
-        else:
-            try:
-                entry = json.loads(cleaned)
-                normalized_key = normalize_phrase_key(event.message.text)
-                phrases[normalized_key] = entry
+if not cleaned:
+    # 🔄 Try fallback response from Ollama
+    def get_ollama_response(prompt: str) -> str:
+        try:
+            response = requests.post(
+                "http://localhost:11434/api/generate",
+                json={"prompt": prompt, "model": "llama3"}
+            )
+            return response.json().get("response", "🤖 Ollama didn’t reply.")
+        except Exception as e:
+            logger.error(f"❌ Ollama error: {e}")
+            return f"⚠️ Error reaching Ollama: {e}"
 
-                try:
-                    entry["phrase"] = event.message.text  # Add missing 'phrase' key
-                    update_phrase_map(entry)
-                except Exception as e:
-                    logger.error(f"❌ Error updating phrase_map.json: {e}")
+    ollama_text = get_ollama_response(event.message.text)
+    messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
+else:
+    try:
+        entry = json.loads(cleaned)
+        normalized_key = normalize_phrase_key(event.message.text)
+        entry["phrase"] = event.message.text
 
-                filename = format_audio_filename(entry["pinyin"])
-                audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
+        # 🧠 Add to memory (runtime dict)
+        phrases[normalized_key] = entry
 
-                reply_text = (
-                    f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
-                    f"🎧 {entry['audio']}\n"
-                    f"📖 {entry['culture']}\n"
-                    f"🧪 {entry['quiz']['question']}\n"
-                    f"Options: {', '.join(entry['quiz']['options'])}"
+        # 🗂️ Write back to phrase_map.json
+        try:
+            update_phrase_map(entry)  # This updates the file permanently
+            logger.info(f"✅ Updated phrase_map.json with: {entry['phrase']}")
+        except Exception as e:
+            logger.error(f"❌ Failed to update phrase_map.json: {e}")
+
+        # 📘 Log to generate.json for content tracking
+        try:
+            add_to_generate_file({
+                "title": event.message.text,
+                "prompt": event.message.text,
+                "response": json.dumps(entry, ensure_ascii=False)
+            })
+            logger.info(f"✅ Logged tutor output to generate.json")
+        except Exception as e:
+            logger.error(f"❌ Failed to write to generate.json: {e}")
+
+        # 🔊 Prepare audio response
+        filename = format_audio_filename(entry["pinyin"])
+        audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
+
+        reply_text = (
+            f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
+            f"🎧 {entry['audio']}\n"
+            f"📖 {entry['culture']}\n"
+            f"🧪 {entry['quiz']['question']}\n"
+            f"Options: {', '.join(entry['quiz']['options'])}"
+        )
+
+        messages = [
+            TextSendMessage(text=reply_text),
+            AudioSendMessage(original_content_url=audio_url, duration=3000)
+        ]
+    except Exception as e:
+        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
                 )
 
                 messages = [
