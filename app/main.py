@@ -192,25 +192,30 @@ def handle_message(event):
         }]
 
         response = chat(llm_messages)
-        cleaned = extract_json(response)
+        
 
 # logger.info(f"🧠 Raw LLM response: {response}")
 # logger.info(f"🧪 Extracted JSON: {cleaned}")
 
-if not cleaned:
-    # 🔄 Try fallback response from Ollama
-    def get_ollama_response(prompt: str) -> str:
-        try:
-            response = requests.post(
-                "http://localhost:11434/api/generate",
-                json={"prompt": prompt, "model": "llama3"}
-            )
-            return response.json().get("response", "🤖 Ollama didn’t reply.")
-        except Exception as e:
-            logger.error(f"❌ Ollama error: {e}")
-            return f"⚠️ Error reaching Ollama: {e}"
 
-    ollama_text = get_ollama_response(event.message.text)
+
+# 🔄 Define Ollama fallback function before usage
+def get_ollama_response(prompt: str) -> str:
+    try:
+        response = requests.post(
+            "http://localhost:11434/api/generate",
+            json={"prompt": prompt, "model": "llama3"}
+        )
+        return response.json().get("response", "🤖 Ollama didn’t reply.")
+    except Exception as e:
+        logger.error(f"❌ Ollama error: {e}")
+        return f"⚠️ Error reaching Ollama: {e}"
+
+# 🧠 Get tutor response and parse JSON
+ollama_text = get_ollama_response(event.message.text)
+cleaned = extract_json(ollama_text)
+
+if not cleaned:
     messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
 else:
     try:
@@ -223,12 +228,12 @@ else:
 
         # 🗂️ Write back to phrase_map.json
         try:
-            update_phrase_map(entry)  # This updates the file permanently
+            update_phrase_map(entry)
             logger.info(f"✅ Updated phrase_map.json with: {entry['phrase']}")
         except Exception as e:
             logger.error(f"❌ Failed to update phrase_map.json: {e}")
 
-        # 📘 Log to generate.json for content tracking
+        # 📘 Log to generate.json
         try:
             add_to_generate_file({
                 "title": event.message.text,
@@ -256,16 +261,16 @@ else:
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
     except Exception as e:
-        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]    
+        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
 
-
-    try:
-        line_bot_api.reply_message(event.reply_token, messages)
-        logger.info(f"✅ Reply sent: {messages}")
-    except Exception as e:
-        logger.error(f"LINE reply error: {e}")
-        logger.info(f"Reply payload: {messages}")
-        logger.info(f"Reply token: {event.reply_token}")
+# 🚀 Send reply to LINE
+try:
+    line_bot_api.reply_message(event.reply_token, messages)
+    logger.info(f"✅ Reply sent: {messages}")
+except Exception as e:
+    logger.error(f"LINE reply error: {e}")
+    logger.info(f"Reply payload: {messages}")
+    logger.info(f"Reply token: {event.reply_token}")
 
 # 🧪 Visual env check
 print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
