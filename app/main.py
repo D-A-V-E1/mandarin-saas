@@ -194,8 +194,8 @@ def handle_message(event):
         response = chat(llm_messages)
         cleaned = extract_json(response)
 
-logger.info(f"🧠 Raw LLM response: {response}")
-logger.info(f"🧪 Extracted JSON: {cleaned}")
+# logger.info(f"🧠 Raw LLM response: {response}")
+# logger.info(f"🧪 Extracted JSON: {cleaned}")
 
 if not cleaned:
     # 🔄 Try fallback response from Ollama
