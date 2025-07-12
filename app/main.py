@@ -193,36 +193,6 @@ def handle_message(event):
 
 
 
-if not cleaned:
-    # 🩺 Fallback to Ollama if structured JSON failed
-    ollama_text = get_ollama_response(user_text)
-    messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
-else:
-    try:
-        entry = json.loads(cleaned)
-        entry["phrase"] = user_text
-
-        # Optional: save to phrase_map or generate.json here
-
-        filename = format_audio_filename(entry["pinyin"])
-        audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
-
-        reply_text = (
-            f"{user_text} ({entry['pinyin']}) — {entry['translation']}\n\n"
-            f"🎧 {entry['audio']}\n"
-            f"📖 {entry['culture']}\n"
-            f"🧪 {entry['quiz']['question']}\n"
-            f"Options: {', '.join(entry['quiz']['options'])}"
-        )
-
-        messages = [
-            TextSendMessage(text=reply_text),
-            AudioSendMessage(original_content_url=audio_url, duration=3000)
-        ]
-    except Exception as e:
-        logger.error(f"❌ Couldn't parse LLM JSON: {e}")
-        messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
-
 # 🚀 Deliver to LINE
 try:
     line_bot_api.reply_message(event.reply_token, messages)
