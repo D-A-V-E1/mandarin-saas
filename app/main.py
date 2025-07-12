@@ -191,83 +191,24 @@ def handle_message(event):
         response = chat(llm_messages)
         cleaned = extract_json(response)
 
-        if not cleaned:
-            # 🩺 Fallback to Ollama if structured JSON failed
-            ollama_text = get_ollama_response(user_text)
-            messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
-        else:
-            try:
-                entry = json.loads(cleaned)
-                entry["phrase"] = user_text
-
-                # Optional: save to phrase_map or generate.json here
-
-                filename = format_audio_filename(entry["pinyin"])
-                audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
-
-                reply_text = (
-                    f"{user_text} ({entry['pinyin']}) — {entry['translation']}\n\n"
-                    f"🎧 {entry['audio']}\n"
-                    f"📖 {entry['culture']}\n"
-                    f"🧪 {entry['quiz']['question']}\n"
-                    f"Options: {', '.join(entry['quiz']['options'])}"
-                )
-
-                messages = [
-                    TextSendMessage(text=reply_text),
-                    AudioSendMessage(original_content_url=audio_url, duration=3000)
-                ]
-            except Exception as e:
-                logger.error(f"❌ Couldn't parse LLM JSON: {e}")
-                messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
-
-    # 🚀 Deliver to LINE
-    try:
-        line_bot_api.reply_message(event.reply_token, messages)
-        logger.info(f"✅ Reply sent: {messages}")
-    except Exception as e:
-        logger.error(f"LINE reply error: {e}")
-        logger.info(f"Reply payload: {messages}")
-        logger.info(f"Reply token: {event.reply_token}")
-
-
 
 
 if not cleaned:
+    # 🩺 Fallback to Ollama if structured JSON failed
+    ollama_text = get_ollama_response(user_text)
     messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
 else:
     try:
         entry = json.loads(cleaned)
-        normalized_key = normalize_phrase_key(event.message.text)
-        entry["phrase"] = event.message.text
+        entry["phrase"] = user_text
 
-        # 🧠 Add to memory (runtime dict)
-        phrases[normalized_key] = entry
+        # Optional: save to phrase_map or generate.json here
 
-        # 🗂️ Write back to phrase_map.json
-        try:
-            update_phrase_map(entry)
-            logger.info(f"✅ Updated phrase_map.json with: {entry['phrase']}")
-        except Exception as e:
-            logger.error(f"❌ Failed to update phrase_map.json: {e}")
-
-        # 📘 Log to generate.json
-        try:
-            add_to_generate_file({
-                "title": event.message.text,
-                "prompt": event.message.text,
-                "response": json.dumps(entry, ensure_ascii=False)
-            })
-            logger.info(f"✅ Logged tutor output to generate.json")
-        except Exception as e:
-            logger.error(f"❌ Failed to write to generate.json: {e}")
-
-        # 🔊 Prepare audio response
         filename = format_audio_filename(entry["pinyin"])
         audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
 
         reply_text = (
-            f"{event.message.text} ({entry['pinyin']}) — {entry['translation']}\n\n"
+            f"{user_text} ({entry['pinyin']}) — {entry['translation']}\n\n"
             f"🎧 {entry['audio']}\n"
             f"📖 {entry['culture']}\n"
             f"🧪 {entry['quiz']['question']}\n"
@@ -279,9 +220,10 @@ else:
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
     except Exception as e:
-        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
+        logger.error(f"❌ Couldn't parse LLM JSON: {e}")
+        messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
 
-# 🚀 Send reply to LINE
+# 🚀 Deliver to LINE
 try:
     line_bot_api.reply_message(event.reply_token, messages)
     logger.info(f"✅ Reply sent: {messages}")
