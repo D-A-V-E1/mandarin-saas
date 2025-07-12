@@ -1,8 +1,11 @@
-import os, json, re, logging, requests
+import os, json, re, logging, requests, sys
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 
 # ✅ Imports are now clean — no sys.path patching needed
 # from app.utils import add_to_generate_file, update_phrase_map
