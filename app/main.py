@@ -1,10 +1,17 @@
+import os, sys, json, re, logging, requests
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+
+# Patch sys.path if needed for root-level modules
+sys.path.append(os.path.dirname(__file__) + "/..")
+
+# Project utilities
 from app.utils import add_to_generate_file, update_phrase_map
 from utils.fallback_logger import log_missing_phrase
-import os, json, re, logging, requests
+
+# Debug: confirm current working directory
 print("📁 Current working directory:", os.getcwd())
 
 # 🔧 Environment setup
