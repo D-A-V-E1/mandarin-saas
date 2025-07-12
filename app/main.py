@@ -256,15 +256,8 @@ else:
             AudioSendMessage(original_content_url=audio_url, duration=3000)
         ]
     except Exception as e:
-        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
-                )
+        messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]    
 
-                messages = [
-                    TextSendMessage(text=reply_text),
-                    AudioSendMessage(original_content_url=audio_url, duration=3000)
-                ]
-            except Exception as e:
-                messages = [TextSendMessage(text=f"❌ Couldn't parse tutor response: {e}")]
 
     try:
         line_bot_api.reply_message(event.reply_token, messages)
