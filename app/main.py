@@ -200,7 +200,7 @@ try:
 except Exception as e:
     # logger.error(f"LINE reply error: {e}")
     # logger.info(f"Reply payload: {messages}")
-    logger.info(f"Reply token: {event.reply_token}")
+    # logger.info(f"Reply token: {event.reply_token}")
 
 # 🧪 Visual env check
 print("🧪 SUPABASE_URL =", os.getenv("SUPABASE_URL"))
