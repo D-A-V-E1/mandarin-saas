@@ -1,15 +1,22 @@
-import os, json, re, logging, requests, sys
+import os
+import sys
+import json
+import re
+import logging
+import requests
+
 from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+# ✅ Ensure 'app' is visible for all absolute imports like 'app.utils.fallback_logger'
+APP_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))
+sys.path.append(APP_ROOT)
 
-
-# ✅ Imports are now clean — no sys.path patching needed
-# from app.utils import add_to_generate_file, update_phrase_map
+# ✅ Now you can cleanly use:
 # from app.utils.fallback_logger import log_missing_phrase
+# from app.routes.chat.chat import router as chat_router
 
 # Modular imports from specific utility modules
 from app.phrase_store import add_to_generate_file, update_phrase_map
