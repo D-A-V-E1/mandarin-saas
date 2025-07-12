@@ -150,6 +150,8 @@ def get_ollama_response(prompt: str) -> str:
         return f"⚠️ Error reaching Ollama: {e}"
 
 
+
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     logger.info("✅ LINE TextMessage handler triggered")
@@ -191,17 +193,66 @@ def handle_message(event):
         response = chat(llm_messages)
         cleaned = extract_json(response)
 
+        if not cleaned:
+            # 🩺 Fallback to Ollama if structured JSON failed
+            ollama_text = get_ollama_response(user_text)
+            messages = [TextSendMessage(text=f"🧠 Tutor says: {ollama_text}")]
+        else:
+            try:
+                entry = json.loads(cleaned)
+                entry["phrase"] = user_text
+
+                # Optional: persist to memory/disk
+                normalized_key = normalize_phrase_key(user_text)
+                phrases[normalized_key] = entry
+                try:
+                    update_phrase_map(entry)
+                    logger.info(f"✅ Updated phrase_map.json with: {entry['phrase']}")
+                except Exception as e:
+                    logger.error(f"❌ Failed to update phrase_map.json: {e}")
+
+                try:
+                    add_to_generate_file({
+                        "title": user_text,
+                        "prompt": user_text,
+                        "response": json.dumps(entry, ensure_ascii=False)
+                    })
+                    logger.info("✅ Logged to generate.json")
+                except Exception as e:
+                    logger.error(f"❌ Failed to write to generate.json: {e}")
+
+                filename = format_audio_filename(entry["pinyin"])
+                audio_url = (AUDIO_BASE_URL.strip() + filename.strip()).strip()
+
+                reply_text = (
+                    f"{user_text} ({entry['pinyin']}) — {entry['translation']}\n\n"
+                    f"🎧 {entry['audio']}\n"
+                    f"📖 {entry['culture']}\n"
+                    f"🧪 {entry['quiz']['question']}\n"
+                    f"Options: {', '.join(entry['quiz']['options'])}"
+                )
+
+                messages = [
+                    TextSendMessage(text=reply_text),
+                    AudioSendMessage(original_content_url=audio_url, duration=3000)
+                ]
+            except Exception as e:
+                logger.error(f"❌ Couldn't parse LLM JSON: {e}")
+                messages = [TextSendMessage(text="⚠️ Tutor response couldn't be parsed.")]
 
 
-# 🚀 Deliver to LINE
-try:
-    line_bot_api.reply_message(event.reply_token, messages)
-    logger.info(f"✅ Reply sent: {messages}")
-except Exception as e:
-    pass  # no action for now
-    # logger.error(f"LINE reply error: {e}")
-    # logger.info(f"Reply payload: {messages}")
-    # logger.info(f"Reply token: {event.reply_token}")
+
+
+    # 🚀 Deliver to LINE
+
+    try:
+        line_bot_api.reply_message(event.reply_token, messages)
+        logger.info(f"✅ Reply sent: {messages}")
+    except Exception as e:
+        pass  # no action for now
+        # logger.error(f"LINE reply error: {e}")
+        # logger.info(f"Reply payload: {messages}")
+        # logger.info(f"Reply token: {event.reply_token}")
     
 
 # 🧪 Visual env check
