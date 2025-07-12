@@ -9,6 +9,8 @@ from fastapi import FastAPI, Query, HTTPException, Request
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
+from app.routes.debug.debug import router as debug_router
+app.include_router(debug_router)
 
 # ✅ Ensure 'app' is visible for all absolute imports like 'app.utils.fallback_logger'
 APP_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__)))

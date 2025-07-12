@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from utils.llm_client import chat
+from ...utils.llm_client import chat
 
 router = APIRouter()
 
